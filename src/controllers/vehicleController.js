@@ -93,7 +93,8 @@ exports.createVehicle = async (req, res) => {
         // Si hay archivos subidos
         let fotos = [];
         if (req.files && req.files.length > 0) {
-            fotos = req.files.map(file => `/uploads/${file.filename}`);
+            // Guardar la URL pública de Cloudinary
+            fotos = req.files.map(file => file.path);
         }
 
         const vehicle = await Vehicle.create({
@@ -138,7 +139,7 @@ exports.updateVehicle = async (req, res) => {
 
         // Si hay nuevas fotos
         if (req.files && req.files.length > 0) {
-            const newFotos = req.files.map(file => `/uploads/${file.filename}`);
+            const newFotos = req.files.map(file => file.path);
             req.body.fotos = [...(vehicle.fotos || []), ...newFotos];
         }
 
