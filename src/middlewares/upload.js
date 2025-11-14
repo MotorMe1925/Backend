@@ -1,38 +1,26 @@
-const multer = require('multer');
-const path = require('path');
 
-// Configurar almacenamiento
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        // Generar nombre único: timestamp + nombre original
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Filtrar tipos de archivo (solo imágenes)
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'motorme_uploads', // Puedes cambiar el nombre de la carpeta en Cloudinary
+        allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+        transformation: [{ width: 1200, height: 900, crop: 'limit' }],
+    },
+});
 
-    if (extname && mimetype) {
-        cb(null, true);
-    } else {
-        cb(new Error('Solo se permiten imágenes (jpeg, jpg, png, gif, webp)'));
-    }
-};
-
-// Configurar multer
 const upload = multer({
     storage: storage,
-    limits: {
-        fileSize: 5 * 1024 * 1024 // Límite de 5MB por archivo
-    },
-    fileFilter: fileFilter
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
 module.exports = upload;
